@@ -53,7 +53,9 @@ requirements**. Updated continuously as features are built.
 - ✅ Archive list with NL search; per-meeting detail (summary / transcript w/ audio-seek + speaker
   rename / checkable action items); analytics dashboard.
 - ✅ Audio playback synced to transcript (click a timestamp to seek).
-- ⬜ Optional ADK orchestration layer (bonus) — see [ARCHITECTURE.md](ARCHITECTURE.md).
+- ✅ Optional **ADK** orchestration layer (bonus): `adk_app/` `meeting_assistant` agent on
+  `gemini-3.1-pro-preview` with list/transcript/search tools — construction verified; run via
+  `adk web`. See [adk_app/README.md](../backend/adk_app/README.md).
 
 ---
 

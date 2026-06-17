@@ -1,0 +1,8 @@
+# Optional bonus: Google Agent Development Kit (ADK) layer (adk_app/).
+# Install AFTER the main requirements, then pin opentelemetry back so chromadb keeps working
+# (google-adk declares an older opentelemetry pin, but runs fine on 1.42.1):
+#
+#   pip install -r requirements-adk.txt
+#   pip install "opentelemetry-sdk==1.42.1" "opentelemetry-api==1.42.1"
+#
+google-adk>=2.2

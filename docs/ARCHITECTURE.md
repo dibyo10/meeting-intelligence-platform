@@ -94,10 +94,21 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - `POST /api/search` — `{query}` → cited RAG answer + matches
 - `GET  /api/analytics/...` — speaking-time, frequency, completion, topics
 
+## ADK bonus layer (`backend/adk_app/`)
+An optional [Google ADK](https://google.github.io/adk-docs/) agent — `meeting_assistant`
+(`gemini-3.1-pro-preview`) — exposes the platform to a tool-using agent via `adk web` /
+`adk run`. Tools: `list_meetings`, `get_meeting_transcript(id)`, `search_archive(query)`
+(reuses the RAG service). It is **additive**: the FastAPI product does not import or depend
+on it, so ADK's dependency quirks (an older opentelemetry pin) never affect the product.
+See [`backend/adk_app/README.md`](../backend/adk_app/README.md).
+
 ## Key decisions
 - **Python 3.11 venv** — system Python is 3.14, which lacks torch/pyannote/ctranslate2 wheels.
 - **Gemini model in one constant** (`config.GEMINI_MODEL`) — swap models in one place.
-- **google-genai over ADK for the agent layer** — chosen for reliability of the unattended
-  build; an ADK orchestration layer is planned as an additive bonus and does not block the product.
+- **google-genai for the in-product agent layer; ADK as an additive bonus** — the product's
+  agents run on `google-genai` (rock-solid, fully testable offline); ADK ships as a separate,
+  runnable `adk_app/` package so the assignment's "use ADK" preference is met without coupling
+  the product to ADK's heavier dependency surface.
+- **PyAV for audio conversion** — no dependency on a system `ffmpeg` binary.
 - **Background pipeline + status polling** — keeps the upload endpoint responsive and the
   UI honest about long-running transcription.
