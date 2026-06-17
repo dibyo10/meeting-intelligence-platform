@@ -28,10 +28,16 @@ def _get_pipeline():
 
         s = get_settings()
         logger.info("Loading pyannote speaker-diarization-3.1 pipeline")
-        _pipeline = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1",
-            use_auth_token=s.hf_token,
-        )
+        try:
+            # pyannote.audio >= 4 uses `token=`
+            _pipeline = Pipeline.from_pretrained(
+                "pyannote/speaker-diarization-3.1", token=s.hf_token
+            )
+        except TypeError:
+            # pyannote.audio < 4 uses `use_auth_token=`
+            _pipeline = Pipeline.from_pretrained(
+                "pyannote/speaker-diarization-3.1", use_auth_token=s.hf_token
+            )
         # Keep on CPU by default; pyannote on Apple MPS can be flaky.
         try:
             import torch
