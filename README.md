@@ -35,12 +35,14 @@ See [`docs/FEATURES.md`](docs/FEATURES.md) for the living feature log and [`docs
 
 ## 🚀 Quick start
 
+> Full details + troubleshooting: [`docs/SETUP.md`](docs/SETUP.md). Demo script: [`docs/DEMO.md`](docs/DEMO.md).
+
 ### Prerequisites
-- Python **3.11** (the ML stack does not have wheels for 3.14 yet)
+- Python **3.11** (the ML stack has no wheels for 3.14 yet; `python3.11` is at `~/.local/bin/python3.11`)
 - Node 18+ and npm
-- `ffmpeg` on PATH (`brew install ffmpeg`)
-- A **Gemini API key** (Google AI Studio)
-- A **HuggingFace token** with the `pyannote/speaker-diarization-3.1` terms accepted (for diarisation)
+- ffmpeg — **optional** (audio is converted with PyAV, which bundles its own ffmpeg libs)
+- A **Gemini API key** (Google AI Studio) — for summary / action items / topics / RAG
+- A **HuggingFace token** with `pyannote/speaker-diarization-3.1` terms accepted — for multi-speaker diarisation
 
 ### 1. Backend
 ```bash
@@ -60,6 +62,15 @@ npm run dev                 # http://localhost:5173
 ```
 
 Open the frontend, upload a meeting recording, and watch it get transcribed, summarised, and indexed.
+
+### Verify without the UI
+```bash
+cd backend
+./venv/bin/python scripts/selftest.py   # transcription + diarisation on the sample
+./venv/bin/python scripts/e2e_test.py    # full pipeline + API (in-process)
+```
+> A meeting processed before you added the Gemini key is transcript-only — hit **↻ Reprocess**
+> (or `POST /api/meetings/{id}/reprocess`) after adding keys to generate the summary + search index.
 
 ---
 
