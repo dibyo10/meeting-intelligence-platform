@@ -1,0 +1,44 @@
+# ---- Python ----
+backend/venv/
+backend/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ---- Env / secrets ----
+.env
+backend/.env
+*.env.local
+
+# ---- Runtime data (not committed) ----
+data/uploads/*
+data/chroma/*
+!data/uploads/.gitkeep
+!data/chroma/.gitkeep
+*.sqlite3
+*.sqlite
+*.db
+
+# ---- Sample audio (large) ----
+samples/*
+!samples/.gitkeep
+!samples/README.md
+
+# ---- Node / frontend ----
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ---- Model / cache files ----
+.cache/
+*.ckpt
+*.bin
+torch_cache/
+
+# ---- OS / editor ----
+.DS_Store
+.idea/
+.vscode/
+*.log
