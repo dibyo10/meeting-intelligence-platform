@@ -44,7 +44,15 @@ def _build_context(matches: list[dict]) -> str:
 def search(query: str, top_k: Optional[int] = None, meeting_id: Optional[int] = None) -> dict[str, Any]:
     s = get_settings()
     k = top_k or s.rag_top_k
-    matches = vectorstore.query(query, k, meeting_id=meeting_id)
+    try:
+        matches = vectorstore.query(query, k, meeting_id=meeting_id)
+    except Exception as exc:
+        logger.warning("Retrieval failed: %s", exc)
+        return {
+            "query": query,
+            "answer": "Search is currently unavailable — it requires a configured Gemini API key for embeddings.",
+            "matches": [],
+        }
 
     if not matches:
         return {
