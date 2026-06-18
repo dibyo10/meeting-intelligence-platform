@@ -10,42 +10,21 @@ The pipeline combines speech recognition, speaker identification, large language
 
 ## End-to-End Workflow
 
-```text
-Audio Upload / Live Recording
-            │
-            ▼
-     Meeting Creation
-            │
-            ▼
-      Audio Processing
-            │
-            ▼
-   Speech-to-Text (Whisper)
-            │
-            ▼
-    Speaker Diarization
-            │
-            ▼
- Transcript + Speaker Merge
-            │
-            ▼
-       Gemini Analysis
-      /      |       \
-     /       |        \
-Summary  Action Items  Topics
-     \       |        /
-      \      |       /
-            ▼
-    Embedding Generation
-            │
-            ▼
-         ChromaDB
-            │
-            ▼
-      Search & RAG
-            │
-            ▼
-        Analytics
+```mermaid
+flowchart TD
+    A["Audio Upload / Live Recording"] --> B["Meeting Creation"]
+    B --> C["Audio Processing"]
+    C --> D["Speech-to-Text — Whisper"]
+    D --> E["Speaker Diarization"]
+    E --> F["Transcript + Speaker Merge"]
+    F --> G["Gemini Analysis"]
+    G --> G1["Summary"]
+    G --> G2["Action Items"]
+    G --> G3["Topics"]
+    G1 & G2 & G3 --> H["Embedding Generation"]
+    H --> I[("ChromaDB")]
+    I --> J["Search & RAG"]
+    J --> K["Analytics"]
 ```
 
 ---
@@ -243,23 +222,14 @@ Store embeddings for retrieval-augmented generation (RAG).
 
 ### Query Flow
 
-```text
-User Query
-     │
-     ▼
-Generate Query Embedding
-     │
-     ▼
-Retrieve Similar Chunks
-     │
-     ▼
-Provide Context to Gemini
-     │
-     ▼
-Generate Grounded Answer
-     │
-     ▼
-Return Citations
+```mermaid
+flowchart TD
+    Q["User Query"]
+    Q --> QE["Generate Query Embedding"]
+    QE --> RC["Retrieve Similar Chunks"]
+    RC --> CTX["Provide Context to Gemini"]
+    CTX --> GA["Generate Grounded Answer"]
+    GA --> CIT["Return Citations"]
 ```
 
 ### Example Questions
@@ -327,23 +297,21 @@ The platform follows a graceful degradation approach.
 
 Meetings move through the following states:
 
-```text
-queued
-   │
-   ▼
-transcribing
-   │
-   ▼
-diarising
-   │
-   ▼
-analysing
-   │
-   ▼
-indexing
-   │
-   ▼
-done
+```mermaid
+stateDiagram-v2
+    [*] --> queued
+    queued --> transcribing
+    transcribing --> diarising
+    diarising --> analysing
+    analysing --> indexing
+    indexing --> done
+    done --> [*]
+
+    queued --> error
+    transcribing --> error
+    diarising --> error
+    analysing --> error
+    indexing --> error
 ```
 
 If any stage fails, the meeting enters an error state and can be reprocessed.
