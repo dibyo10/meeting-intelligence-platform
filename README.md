@@ -19,7 +19,7 @@ This is a GenAI course project in the **Voice + RAG** category.
 | 5 | **Searchable archive (RAG)** | `gemini-embedding-001` + ChromaDB; natural-language search with citations |
 | 6 | **Meeting analytics** | Speaking time, meeting frequency, action-item completion rate, recurring topics |
 
-See [`docs/FEATURES.md`](docs/FEATURES.md) for the living feature log and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the design.
+See [`docs/FEATURES.md`](docs/FEATURES.md) for the living feature log and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the design, and and [`docs/PROCESSING_PIPELINE.md`](docs/PROCESSING_PIPELINE.md) for a detailed breakdown of the end-to-end meeting workflow.
 
 ---
 
