@@ -60,7 +60,15 @@ def diarize(wav_path: Path) -> list[dict[str, Any]]:
         return []
     try:
         pipeline = _get_pipeline()
-        annotation = pipeline(str(wav_path))
+        # Feed pyannote a pre-loaded waveform (via soundfile) instead of a path, so it does
+        # NOT route audio decoding through torchcodec/torchaudio (which need the system
+        # ffmpeg libs that are broken on this machine).
+        import soundfile as sf
+        import torch
+
+        data, sr = sf.read(str(wav_path), dtype="float32", always_2d=True)  # (samples, channels)
+        waveform = torch.from_numpy(data.T).contiguous()  # (channels, samples)
+        annotation = pipeline({"waveform": waveform, "sample_rate": sr})
         turns = [
             {"start": float(turn.start), "end": float(turn.end), "speaker": str(speaker)}
             for turn, _, speaker in annotation.itertracks(yield_label=True)

@@ -27,17 +27,20 @@ requirements**. Updated continuously as features are built.
 - Graceful single-speaker fallback verified when no `HF_TOKEN`.
 - ⏳ ≥3-speaker separation requires an `HF_TOKEN` (sample contains 3 distinct voices for the demo).
 
-### 3. Action Item Extraction — 🟡
+### 3. Action Item Extraction — ✅ (verified live)
 - `gemini-3.1-pro-preview` extracts **task / owner / deadline**; checkable & persisted; feeds
-  completion-rate analytics. Code path runs and degrades gracefully without a key.
+  completion-rate analytics.
+- **Verified:** 4/4 explicit tasks captured with correct owners + deadlines on the sample.
 
-### 4. Structured Summary — 🟡
+### 4. Structured Summary — ✅ (verified live)
 - Sections: **attendees · key decisions · discussion points · open questions · next steps**
-  via forced JSON schema.
+  via forced JSON schema. **Verified:** all sections populated correctly on the sample; the
+  defensive client also auto-recovered from a transient Gemini `503`.
 
-### 5. Searchable Archive (RAG) — 🟡
+### 5. Searchable Archive (RAG) — ✅ (verified live)
 - Transcript + summary chunked, embedded with `gemini-embedding-001` (768-dim), stored in ChromaDB.
 - NL search across the whole archive; answers cite source meetings/speakers/timestamps.
+- **Verified:** "What did we decide about pricing?" → grounded, citation-tagged answer.
 
 ### 6. Meeting Analytics — ✅
 - Speaking time per participant, meeting frequency, action-item completion rate, recurring topics.
@@ -78,3 +81,6 @@ requirements**. Updated continuously as features are built.
 - **2026-06-18** — Frontend (upload+mic, archive+search, detail, analytics); builds clean.
 - **2026-06-18** — PyAV audio path (system ffmpeg independence), lifespan init, graceful search.
 - **2026-06-18** — End-to-end verified offline; deps locked; sample meeting seeded.
+- **2026-06-18** — **Live-verified with real keys**: summary, action items, topics, RAG search,
+  and analytics all working on `gemini-3.1-pro-preview`. Diarisation switched to a
+  torchcodec-free waveform load; multi-speaker output pending HF model-license acceptance.
