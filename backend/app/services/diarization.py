@@ -7,6 +7,7 @@ attributed to a single ``Speaker 1`` — the rest of the pipeline still works.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -27,6 +28,12 @@ def _get_pipeline():
         from pyannote.audio import Pipeline
 
         s = get_settings()
+        # Export the token so EVERY internal huggingface_hub download (the pipeline pulls
+        # several gated sub-models, e.g. speaker-diarization-community-1) authenticates,
+        # not just the top-level from_pretrained call.
+        if s.hf_token:
+            os.environ["HF_TOKEN"] = s.hf_token
+            os.environ["HUGGING_FACE_HUB_TOKEN"] = s.hf_token
         logger.info("Loading pyannote speaker-diarization-3.1 pipeline")
         try:
             # pyannote.audio >= 4 uses `token=`

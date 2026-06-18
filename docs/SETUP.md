@@ -55,8 +55,10 @@ npm run dev          # http://localhost:5173  (proxies /api → :8000)
 ## 3. Enable speaker diarisation (HF token)
 
 1. Create a token at <https://hf.co/settings/tokens> (read scope is enough).
-2. Accept the model terms (one click each) while logged in:
+2. Accept the model terms (one click each) while logged in — **all three** (pyannote 4.x
+   pulls the community model internally):
    - <https://hf.co/pyannote/speaker-diarization-3.1>
+   - <https://hf.co/pyannote/speaker-diarization-community-1>
    - <https://hf.co/pyannote/segmentation-3.0>
 3. Put the token in `backend/.env` as `HF_TOKEN=...` and restart the backend.
 
