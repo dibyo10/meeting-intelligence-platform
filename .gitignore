@@ -25,6 +25,7 @@ data/chroma/*
 samples/*
 !samples/.gitkeep
 !samples/README.md
+!samples/make_samples.py
 
 # ---- Node / frontend ----
 frontend/node_modules/
