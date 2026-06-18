@@ -32,7 +32,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_list or ["*"],
-    allow_credentials=True,
+    allow_credentials=False,  # no cookies are used; lets "*" origins work for the deployed SPA
     allow_methods=["*"],
     allow_headers=["*"],
 )

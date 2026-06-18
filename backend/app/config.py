@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     # --- paths / server ---
     data_dir: str = ""
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "*"  # permissive by default; set to your frontend URL to restrict
 
     # ---------- derived ----------
     @property
