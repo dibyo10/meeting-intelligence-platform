@@ -1,0 +1,41 @@
+# Render Blueprint for the AI Meeting Intelligence backend API.
+#
+# IMPORTANT: this backend bundles heavy ML deps (torch, pyannote.audio, faster-whisper,
+# chromadb) and downloads Whisper + pyannote model weights at runtime. A free/starter
+# 512 MB instance WILL run out of memory. Use an instance with >= 2 GB RAM.
+#
+# The React frontend (frontend/) should be deployed as a separate Render *Static Site*:
+#   Root Directory:  frontend
+#   Build Command:   npm install && npm run build
+#   Publish Dir:     dist
+#   Env var:         VITE_API_BASE = https://<this-api>.onrender.com
+#   (also add a rewrite rule  /*  ->  /index.html  for client-side routing)
+
+services:
+  - type: web
+    name: meeting-intelligence-api
+    runtime: python
+    rootDir: backend
+    plan: standard                # free/starter (512MB) OOMs on torch + Whisper
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION       # MUST be 3.11 — 3.12+/3.13 lack torch/pyannote wheels
+        value: "3.11.9"
+      - key: DATA_DIR             # point SQLite + Chroma at the persistent disk
+        value: /var/data
+      - key: HF_HOME              # cache model weights on the disk (avoid re-download per deploy)
+        value: /var/data/hf-cache
+      - key: CORS_ORIGINS         # set to your frontend URL in production
+        value: "*"
+      - key: GEMINI_API_KEY
+        sync: false               # set in the Render dashboard (secret)
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 5
