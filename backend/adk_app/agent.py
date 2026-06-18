@@ -1,6 +1,6 @@
 """Google ADK (Agent Development Kit) bonus layer.
 
-Exposes a `root_agent` — a `meeting_assistant` LlmAgent powered by `gemini-3.1-pro-preview`
+Exposes a `root_agent` — a `meeting_assistant` LlmAgent powered by `gemini-2.5-flash`
 — that can reason over the platform's own data through three tools (list meetings, fetch a
 transcript, semantic-search the archive). Run it interactively with:
 

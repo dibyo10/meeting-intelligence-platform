@@ -1,6 +1,6 @@
 """SearchAgent — retrieval-augmented answers over the meeting archive.
 
-Retrieves the top-k most relevant chunks from ChromaDB and asks gemini-3.1-pro-preview to
+Retrieves the top-k most relevant chunks from ChromaDB and asks gemini-2.5-flash to
 synthesise a grounded answer that cites its sources as [1], [2], ...
 """
 from __future__ import annotations

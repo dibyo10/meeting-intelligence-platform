@@ -28,9 +28,15 @@ class Settings(BaseSettings):
     hf_token: str = ""
 
     # --- models ---
-    gemini_model: str = "gemini-3.1-pro-preview"
+    gemini_model: str = "gemini-2.5-flash"
     gemini_embed_model: str = "gemini-embedding-001"
     gemini_thinking_level: str = "high"
+
+    # --- auth (off until AUTH_PASSWORD is set) ---
+    auth_username: str = "admin"
+    auth_password: str = ""          # empty => auth disabled, API stays open
+    auth_secret: str = ""            # HMAC signing key; falls back to auth_password if empty
+    auth_token_ttl_minutes: int = 1440  # 24h
 
     # --- whisper ---
     whisper_model: str = "base"
@@ -53,6 +59,14 @@ class Settings(BaseSettings):
     @property
     def has_gemini(self) -> bool:
         return bool(self.gemini_key)
+
+    @property
+    def auth_enabled(self) -> bool:
+        return bool(self.auth_password)
+
+    @property
+    def auth_signing_key(self) -> str:
+        return self.auth_secret or self.auth_password
 
     @property
     def data_path(self) -> Path:

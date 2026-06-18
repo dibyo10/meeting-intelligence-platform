@@ -1,0 +1,5 @@
+# Test / dev dependencies (installed on top of requirements.txt).
+# The pure-logic + API tests under tests/ run without the heavy ML stack.
+-r requirements.txt
+pytest>=8.0
+httpx>=0.27        # required by fastapi.testclient.TestClient

@@ -7,6 +7,23 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
+# ---------- auth ----------
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int  # seconds until the token expires
+
+
+class IdentityResponse(BaseModel):
+    username: str
+    auth_enabled: bool
+
+
 # ---------- nested ----------
 class SpeakerOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

@@ -30,7 +30,7 @@ requirements**. Updated continuously as features are built.
   attributed to the right voice. ✓ success metric (≥3 speakers).
 
 ### 3. Action Item Extraction — ✅ (verified live)
-- `gemini-3.1-pro-preview` extracts **task / owner / deadline**; checkable & persisted; feeds
+- `gemini-2.5-flash` extracts **task / owner / deadline**; checkable & persisted; feeds
   completion-rate analytics.
 - **Verified:** 4/4 explicit tasks captured with correct owners + deadlines on the sample.
 
@@ -59,7 +59,7 @@ requirements**. Updated continuously as features are built.
   rename / checkable action items); analytics dashboard.
 - ✅ Audio playback synced to transcript (click a timestamp to seek).
 - ✅ Optional **ADK** orchestration layer (bonus): `adk_app/` `meeting_assistant` agent on
-  `gemini-3.1-pro-preview` with list/transcript/search tools — construction verified; run via
+  `gemini-2.5-flash` with list/transcript/search tools — construction verified; run via
   `adk web`. See [adk_app/README.md](../backend/adk_app/README.md).
 
 ---
@@ -77,14 +77,14 @@ requirements**. Updated continuously as features are built.
 ---
 
 ## Changelog
-- **2026-06-18** — Repo scaffolded; stack finalised (Whisper + pyannote + FastAPI + React + gemini-3.1-pro-preview).
+- **2026-06-18** — Repo scaffolded; stack finalised (Whisper + pyannote + FastAPI + React + gemini-2.5-flash).
 - **2026-06-18** — Backend core (config, ORM, schemas), Whisper + pyannote services, Gemini agents,
   embeddings + ChromaDB + RAG, ingest pipeline, analytics, FastAPI routers.
 - **2026-06-18** — Frontend (upload+mic, archive+search, detail, analytics); builds clean.
 - **2026-06-18** — PyAV audio path (system ffmpeg independence), lifespan init, graceful search.
 - **2026-06-18** — End-to-end verified offline; deps locked; sample meeting seeded.
 - **2026-06-18** — **Live-verified with real keys**: summary, action items, topics, RAG search,
-  and analytics all working on `gemini-3.1-pro-preview`. Diarisation switched to a
+  and analytics all working on `gemini-2.5-flash`. Diarisation switched to a
   torchcodec-free waveform load; multi-speaker output pending HF model-license acceptance.
 - **2026-06-18** — **Diarisation fully working**: 3 voices correctly separated into Speaker 1/2/3
   (fixed pyannote 4.x `DiarizeOutput.speaker_diarization` API + HF token env export).

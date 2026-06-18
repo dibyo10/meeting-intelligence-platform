@@ -1,4 +1,4 @@
-"""Defensive wrapper around the google-genai SDK for gemini-3.1-pro-preview.
+"""Defensive wrapper around the google-genai SDK for gemini-2.5-flash.
 
 Goals:
 * Use ONE model name from config (``GEMINI_MODEL``) everywhere.

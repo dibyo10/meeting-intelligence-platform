@@ -10,7 +10,7 @@
                           │  2. Transcribe   → faster-whisper             │
                           │  3. Diarise      → pyannote.audio             │
                           │  4. Merge        → speaker-labelled segments  │
-                          │  5. Agents (gemini-3.1-pro-preview):          │
+                          │  5. Agents (gemini-2.5-flash):                │
                           │       • SummaryAgent                          │
                           │       • ActionItemAgent                       │
                           │       • TopicAgent                            │
@@ -50,7 +50,7 @@ analysing → indexing → done`).
   `Speaker 1` and the rest of the pipeline still works.
 
 ### Agents (`agents/`)
-All use `gemini-3.1-pro-preview` through a single defensive client
+All use `gemini-2.5-flash` through a single defensive client
 (`agents/gemini_client.py`) that:
 - requests `response_mime_type="application/json"`,
 - sets `thinking_config(thinking_level=...)`,
@@ -58,7 +58,7 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - **degrades gracefully** — if the installed SDK rejects a parameter, it retries without it,
 - robustly parses JSON (strips code fences) and validates with Pydantic.
 
-- **SummaryAgent** → `{attendees, key_decisions, discussion_points, open_questions, next_steps}`
+- **SummaryAgent** → `{overview, attendees, key_decisions, discussion_points, open_questions, next_steps}`
 - **ActionItemAgent** → `[{task, owner, deadline}]`
 - **TopicAgent** → `[topic]` (normalised keywords for recurring-topic analytics)
 - **SearchAgent** → retrieves top-k chunks from ChromaDB and synthesises a cited answer
@@ -76,7 +76,7 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - **Recurring topics:** topic frequency across meetings.
 
 ## Data model (SQLite via SQLAlchemy)
-- `meetings(id, title, created_at, duration, audio_path, status, error)`
+- `meetings(id, title, created_at, duration, audio_path, status, stage, error, language)`
 - `speakers(id, meeting_id, label, display_name)`
 - `transcript_segments(id, meeting_id, speaker_id, start, end, text)`
 - `action_items(id, meeting_id, task, owner, deadline, completed)`
@@ -84,6 +84,9 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - `topics(id, meeting_id, topic)`
 
 ## API surface (FastAPI)
+- `POST /api/auth/login` — `{username, password}` → `{access_token, token_type, expires_in}` (public)
+- `GET  /api/auth/me` — current identity (requires token when auth is enabled)
+- `GET  /api/health` — liveness + configured models (public)
 - `POST /api/meetings` — upload audio (multipart), starts pipeline → `{id, status}`
 - `GET  /api/meetings` — list
 - `GET  /api/meetings/{id}` — detail (transcript, summary, action items, speakers, status)
@@ -96,11 +99,29 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 
 ## ADK bonus layer (`backend/adk_app/`)
 An optional [Google ADK](https://google.github.io/adk-docs/) agent — `meeting_assistant`
-(`gemini-3.1-pro-preview`) — exposes the platform to a tool-using agent via `adk web` /
+(`gemini-2.5-flash`) — exposes the platform to a tool-using agent via `adk web` /
 `adk run`. Tools: `list_meetings`, `get_meeting_transcript(id)`, `search_archive(query)`
 (reuses the RAG service). It is **additive**: the FastAPI product does not import or depend
 on it, so ADK's dependency quirks (an older opentelemetry pin) never affect the product.
 See [`backend/adk_app/README.md`](../backend/adk_app/README.md).
+
+## Authentication (`app/auth.py`, `routers/auth.py`)
+Deliberately minimal and dependency-free:
+- **One admin account** from the environment (`AUTH_USERNAME` / `AUTH_PASSWORD`) — no users
+  table, no registration. The env *is* the secret.
+- **Stateless HMAC-SHA256 tokens** signed with the standard library only (no JWT/bcrypt
+  packages). `POST /api/auth/login` issues a token; clients send it as
+  `Authorization: Bearer <token>`. Tokens carry `{sub, exp}` and expire after
+  `AUTH_TOKEN_TTL_MINUTES`.
+- **Off until configured.** If `AUTH_PASSWORD` is unset the API stays fully open (so the
+  frontend and existing clients keep working); when it is set, every route except
+  `/api/health` and `/api/auth/login` requires a valid token via the `require_auth` dependency.
+
+## Resilience
+- **Startup recovery** (`database.recover_interrupted_meetings`): because ingest runs as an
+  in-process background task, a restart mid-pipeline would strand a meeting in
+  `queued`/`processing`. On boot those are flipped to `error` ("interrupted by restart") so
+  the UI shows a clear, **reprocessable** state instead of an endless spinner.
 
 ## Key decisions
 - **Python 3.11 venv** — system Python is 3.14, which lacks torch/pyannote/ctranslate2 wheels.

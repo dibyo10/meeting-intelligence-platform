@@ -1,8 +1,13 @@
 """SQLAlchemy ORM models for meetings, speakers, transcripts, action items, summaries, topics."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
+
+
+def _utcnow() -> datetime:
+    """Naive UTC timestamp (avoids the deprecated ``datetime.utcnow``)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 from sqlalchemy import (
     Boolean,
@@ -32,7 +37,7 @@ class Meeting(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255), default="Untitled meeting")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     duration: Mapped[float] = mapped_column(Float, default=0.0)
     audio_path: Mapped[str] = mapped_column(String(512), default="")
     status: Mapped[str] = mapped_column(String(32), default=STATUS_QUEUED)

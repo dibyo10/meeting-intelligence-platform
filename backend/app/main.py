@@ -4,14 +4,16 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .auth import require_auth
 from .config import get_settings
-from .database import init_db
-from .routers import action_items, analytics, meetings, search, speakers
+from .database import init_db, recover_interrupted_meetings
+from .routers import action_items, analytics, auth, meetings, search, speakers
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -19,6 +21,13 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    n = recover_interrupted_meetings()
+    if n:
+        logger.warning("Marked %s meeting(s) interrupted by a previous restart as errored", n)
+    if settings.auth_enabled:
+        logger.info("Authentication ENABLED (admin user: %s)", settings.auth_username)
+    else:
+        logger.warning("Authentication DISABLED — API is open. Set AUTH_PASSWORD to require login.")
     yield
 
 
@@ -50,8 +59,13 @@ def health() -> dict:
     }
 
 
-app.include_router(meetings.router)
-app.include_router(speakers.router)
-app.include_router(action_items.router)
-app.include_router(search.router)
-app.include_router(analytics.router)
+# /api/auth/* and /api/health stay public; everything else requires a valid token
+# (a no-op when auth is disabled, i.e. AUTH_PASSWORD unset).
+app.include_router(auth.router)
+
+_protected = [Depends(require_auth)]
+app.include_router(meetings.router, dependencies=_protected)
+app.include_router(speakers.router, dependencies=_protected)
+app.include_router(action_items.router, dependencies=_protected)
+app.include_router(search.router, dependencies=_protected)
+app.include_router(analytics.router, dependencies=_protected)

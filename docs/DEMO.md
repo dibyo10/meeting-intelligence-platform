@@ -44,7 +44,7 @@ Show the synthesised answer **with cited sources** that link back to the meeting
 completion rate, recurring topics, meeting frequency over time.
 → *Feature: Meeting analytics.*
 
-**8. Architecture one-liner (15s).** "Whisper + pyannote for voice, `gemini-3.1-pro-preview`
+**8. Architecture one-liner (15s).** "Whisper + pyannote for voice, `gemini-2.5-flash`
 for all reasoning, Gemini embeddings + ChromaDB for RAG, FastAPI + React. Each meeting is
 processed by a staged pipeline of specialised agents."
 

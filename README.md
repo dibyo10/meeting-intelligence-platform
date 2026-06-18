@@ -14,7 +14,7 @@ This is a GenAI course project in the **Voice + RAG** category.
 |---|---------|-----|
 | 1 | **Audio transcription** | `faster-whisper` with word-level timestamps; handles noise & technical vocab |
 | 2 | **Speaker diarisation** | `pyannote.audio` labels speakers; rename `Speaker 1 → Alice` post-hoc |
-| 3 | **Action-item extraction** | `gemini-3.1-pro-preview` pulls task + owner + deadline into a checkable list |
+| 3 | **Action-item extraction** | `gemini-2.5-flash` pulls task + owner + deadline into a checkable list |
 | 4 | **Structured summary** | Attendees · key decisions · discussion points · open questions · next steps |
 | 5 | **Searchable archive (RAG)** | `gemini-embedding-001` + ChromaDB; natural-language search with citations |
 | 6 | **Meeting analytics** | Speaking time, meeting frequency, action-item completion rate, recurring topics |
@@ -26,7 +26,7 @@ See [`docs/FEATURES.md`](docs/FEATURES.md) for the living feature log and [`docs
 ## 🧱 Tech stack
 
 - **Transcription:** faster-whisper (Whisper) · **Diarisation:** pyannote.audio
-- **LLM:** `gemini-3.1-pro-preview` (summary, action items, topics, RAG answers) via `google-genai`
+- **LLM:** `gemini-2.5-flash` (summary, action items, topics, RAG answers) via `google-genai`
 - **Embeddings + RAG:** `gemini-embedding-001` + ChromaDB
 - **Backend:** FastAPI (Python 3.11) · **Frontend:** React + Vite + TypeScript
 - **Storage:** SQLite (metadata, action items) + ChromaDB (vectors)
@@ -74,6 +74,47 @@ cd backend
 
 ---
 
+## 🔐 Authentication (optional)
+
+Auth ships **off by default** — the API is open so the frontend works out of the box. To
+require login, set these in `backend/.env`:
+
+```bash
+AUTH_USERNAME=admin
+AUTH_PASSWORD=choose-a-strong-password   # setting this turns auth ON
+AUTH_SECRET=any-random-string            # token signing key (optional; defaults to the password)
+```
+
+Then obtain and use a token:
+
+```bash
+TOKEN=$(curl -s -X POST localhost:8000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"choose-a-strong-password"}' | jq -r .access_token)
+
+curl localhost:8000/api/meetings -H "Authorization: Bearer $TOKEN"
+```
+
+`/api/health` and `/api/auth/login` stay public; every other `/api/*` route requires the
+`Authorization: Bearer <token>` header. Tokens are stateless HMAC-signed (standard library
+only — no extra dependencies) and expire after `AUTH_TOKEN_TTL_MINUTES` (default 24h).
+
+> **Models are configurable.** `GEMINI_MODEL` defaults to `gemini-2.5-flash`; change it (and
+> `GEMINI_EMBED_MODEL`) in `backend/.env` to any current Gemini model — it's read from one place.
+
+## ✅ Tests
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest tests -q          # auth, routing, RAG chunking, speaker-merge, analytics — no API keys/audio needed
+```
+
+The `tests/` suite covers auth (token sign/verify/expiry + route gating), JSON parsing,
+chunking, speaker assignment, agent output normalisation, and analytics. The heavier
+`scripts/selftest.py` / `scripts/e2e_test.py` exercise the full audio pipeline (needs the ML
+stack + a sample recording).
+
 ## 🎯 Success metrics (acceptance targets)
 
 - Transcription WER **< 10%** on clear audio
@@ -88,8 +129,8 @@ How each is met is tracked in [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## 📁 Repo layout
 ```
-meeting-intelligence/
-├── backend/          FastAPI app, Whisper/pyannote services, Gemini agents, RAG
+meeting-intelligence-platform/
+├── backend/          FastAPI app, Whisper/pyannote services, Gemini agents, RAG, auth, tests
 ├── frontend/         React + Vite UI (upload, archive/search, detail, analytics)
 ├── docs/             FEATURES.md (living log) + ARCHITECTURE.md
 ├── data/             SQLite DB, ChromaDB, uploads (gitignored)

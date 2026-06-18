@@ -3,7 +3,7 @@
 An optional [Google Agent Development Kit](https://google.github.io/adk-docs/) agent that
 sits on top of the platform. It's **additive** — the FastAPI product works without it.
 
-`root_agent` is a `meeting_assistant` (`gemini-3.1-pro-preview`) with three tools:
+`root_agent` is a `meeting_assistant` (`gemini-2.5-flash`) with three tools:
 - `list_meetings()` — what's in the archive
 - `get_meeting_transcript(meeting_id)` — read one meeting
 - `search_archive(query)` — RAG search across all meetings
