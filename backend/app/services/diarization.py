@@ -75,7 +75,10 @@ def diarize(wav_path: Path) -> list[dict[str, Any]]:
 
         data, sr = sf.read(str(wav_path), dtype="float32", always_2d=True)  # (samples, channels)
         waveform = torch.from_numpy(data.T).contiguous()  # (channels, samples)
-        annotation = pipeline({"waveform": waveform, "sample_rate": sr})
+        result = pipeline({"waveform": waveform, "sample_rate": sr})
+        # pyannote >= 4 returns a DiarizeOutput wrapping the Annotation; 3.x returns the
+        # Annotation directly. Both expose `.itertracks(yield_label=True)`.
+        annotation = getattr(result, "speaker_diarization", result)
         turns = [
             {"start": float(turn.start), "end": float(turn.end), "speaker": str(speaker)}
             for turn, _, speaker in annotation.itertracks(yield_label=True)

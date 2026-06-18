@@ -21,11 +21,13 @@ requirements**. Updated continuously as features are built.
 - **Verified:** clean 35 s sample → 9 segments, 8/9 keywords exact (the 9th, "backend", was
   correctly transcribed as "back end"). **WER well under 10%.** ✓ success metric.
 
-### 2. Speaker Diarisation — ✅ (fallback verified) / 🟡 (multi-speaker needs HF token)
-- `pyannote.audio` 3.1 detects & labels speakers; merged onto Whisper segments by time-overlap.
+### 2. Speaker Diarisation — ✅ (verified live)
+- `pyannote.audio` 4.x detects & labels speakers from the **audio** (voice embeddings),
+  merged onto Whisper segments by time-overlap.
 - Friendly labels (`Speaker 1..N`) + **rename UI** to assign real names.
-- Graceful single-speaker fallback verified when no `HF_TOKEN`.
-- ⏳ ≥3-speaker separation requires an `HF_TOKEN` (sample contains 3 distinct voices for the demo).
+- Graceful single-speaker fallback when no `HF_TOKEN`.
+- **Verified:** the 3-voice sample is correctly separated into Speaker 1/2/3, each segment
+  attributed to the right voice. ✓ success metric (≥3 speakers).
 
 ### 3. Action Item Extraction — ✅ (verified live)
 - `gemini-3.1-pro-preview` extracts **task / owner / deadline**; checkable & persisted; feeds
@@ -84,3 +86,6 @@ requirements**. Updated continuously as features are built.
 - **2026-06-18** — **Live-verified with real keys**: summary, action items, topics, RAG search,
   and analytics all working on `gemini-3.1-pro-preview`. Diarisation switched to a
   torchcodec-free waveform load; multi-speaker output pending HF model-license acceptance.
+- **2026-06-18** — **Diarisation fully working**: 3 voices correctly separated into Speaker 1/2/3
+  (fixed pyannote 4.x `DiarizeOutput.speaker_diarization` API + HF token env export).
+  **🎉 All six core features verified live.**
