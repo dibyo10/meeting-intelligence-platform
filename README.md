@@ -88,7 +88,7 @@ How each is met is tracked in [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## 📁 Repo layout
 ```
-meeting-intelligence/
+meeting-intelligence-platform/
 ├── backend/          FastAPI app, Whisper/pyannote services, Gemini agents, RAG
 ├── frontend/         React + Vite UI (upload, archive/search, detail, analytics)
 ├── docs/             FEATURES.md (living log) + ARCHITECTURE.md

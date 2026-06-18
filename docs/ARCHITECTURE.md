@@ -58,7 +58,7 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - **degrades gracefully** — if the installed SDK rejects a parameter, it retries without it,
 - robustly parses JSON (strips code fences) and validates with Pydantic.
 
-- **SummaryAgent** → `{attendees, key_decisions, discussion_points, open_questions, next_steps}`
+- **SummaryAgent** → `{overview, attendees, key_decisions, discussion_points, open_questions, next_steps}`
 - **ActionItemAgent** → `[{task, owner, deadline}]`
 - **TopicAgent** → `[topic]` (normalised keywords for recurring-topic analytics)
 - **SearchAgent** → retrieves top-k chunks from ChromaDB and synthesises a cited answer
@@ -76,11 +76,11 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - **Recurring topics:** topic frequency across meetings.
 
 ## Data model (SQLite via SQLAlchemy)
-- `meetings(id, title, created_at, duration, audio_path, status, error)`
+- `meetings(id, title, created_at, duration, audio_path, status, stage, error, language)`
 - `speakers(id, meeting_id, label, display_name)`
 - `transcript_segments(id, meeting_id, speaker_id, start, end, text)`
 - `action_items(id, meeting_id, task, owner, deadline, completed)`
-- `summaries(meeting_id, attendees, key_decisions, discussion_points, open_questions, next_steps)` (JSON columns)
+- `summaries(meeting_id, overview, attendees, key_decisions, discussion_points, open_questions, next_steps)` (JSON columns)
 - `topics(id, meeting_id, topic)`
 
 ## API surface (FastAPI)
