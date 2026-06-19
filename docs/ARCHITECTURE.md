@@ -31,12 +31,13 @@ flowchart TD
 
     B6 --> SQLite & Chroma & Analytics
 
-    Search["SearchAgent — RAG\n◀ natural-language queries"]
+    Search["SearchAgent — RAG"]
     Search --> SQLite
     Search --> Chroma
 
     UI["React + Vite Frontend\nUpload · Archive/Search · Detail · Analytics"]
-    Search --> UI
+    UI -->|natural-language queries| Search
+    Search -->|cited answer + matches| UI
     SQLite --> UI
     Analytics --> UI
 ```
