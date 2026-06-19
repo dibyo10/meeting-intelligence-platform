@@ -16,7 +16,7 @@ flowchart LR
         E2["POST /api/meetings"]
         E3["GET /api/meetings/:id"]
         E4["POST /api/search"]
-        E5["GET /api/analytics/..."]
+         E5["GET /api/analytics/overview"]
     end
 
     subgraph Client["api/client.ts"]

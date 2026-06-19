@@ -48,6 +48,10 @@ analysing → indexing → done`).
 
 ## Components
 
+### Audio conversion (`services/audio.py`)
+- Normalises any uploaded format to 16 kHz mono WAV using **PyAV** (no system `ffmpeg` needed).
+- Also exposes `get_duration()` for the normalised file.
+
 ### Transcription (`services/transcription.py`)
 - `faster-whisper` (`WhisperModel`) with `word_timestamps=True`.
 - Returns segments `{start, end, text, words[]}`.
@@ -95,8 +99,9 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - `topics(id, meeting_id, topic)`
 
 ## API surface (FastAPI)
+- `GET  /api/health` — health check (model config, feature flags)
 - `POST /api/meetings` — upload audio (multipart), starts pipeline → `{id, status}`
-- `GET  /api/meetings` — list
+- `GET  /api/meetings` — list all meetings
 - `GET  /api/meetings/{id}` — detail (transcript, summary, action items, speakers, status)
 - `DELETE /api/meetings/{id}` — delete (DB + vectors + file)
 - `POST /api/meetings/{id}/reprocess` — re-run pipeline

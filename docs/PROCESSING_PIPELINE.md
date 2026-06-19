@@ -300,7 +300,8 @@ Meetings move through the following states:
 ```mermaid
 stateDiagram-v2
     [*] --> queued
-    queued --> transcribing
+    queued --> converting
+    converting --> transcribing
     transcribing --> diarising
     diarising --> analysing
     analysing --> indexing
