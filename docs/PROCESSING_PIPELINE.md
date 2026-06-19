@@ -302,6 +302,7 @@ stateDiagram-v2
     [*] --> queued
     queued --> converting
     converting --> transcribing
+    transcribing --> diarising
     diarising --> analysing
     analysing --> indexing
     indexing --> done
