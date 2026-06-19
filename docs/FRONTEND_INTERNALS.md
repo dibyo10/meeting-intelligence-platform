@@ -14,7 +14,7 @@ flowchart LR
     subgraph Backend["Backend — FastAPI"]
         E1["GET /api/health"]
         E2["POST /api/meetings"]
-        E3["GET /api/meetings/:id"]
+        E3["GET /api/meetings/{meeting_id}"]
         E4["POST /api/search"]
         E5["GET /api/analytics/..."]
     end

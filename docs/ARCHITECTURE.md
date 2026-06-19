@@ -8,22 +8,23 @@ flowchart TD
 
     subgraph Backend["FastAPI Backend"]
         direction TB
-        B1["1. Ingest — save file, create Meeting row"]
-        B2["2. Transcribe — faster-whisper"]
-        B3["3. Diarise — pyannote.audio"]
-        B4["4. Merge — speaker-labelled segments"]
-        B5["5. Agents — gemini-3.1-pro-preview"]
+        B0["1. Ingest — save file, create Meeting row"]
+        B1["2. Convert — PyAV (16 kHz mono WAV)"]
+        B2["3. Transcribe — faster-whisper"]
+        B3["4. Diarise — pyannote.audio"]
+        B4["5. Merge — speaker-labelled segments"]
+        B5["6. Agents — gemini-3.1-pro-preview"]
         B5a["SummaryAgent"]
         B5b["ActionItemAgent"]
         B5c["TopicAgent"]
-        B6["6. Index — gemini-embedding-001 + ChromaDB"]
+        B6["7. Index — gemini-embedding-001 + ChromaDB"]
 
-        B1 --> B2 --> B3 --> B4 --> B5
+        B0 --> B1 --> B2 --> B3 --> B4 --> B5
         B5 --> B5a & B5b & B5c
         B5a & B5b & B5c --> B6
     end
 
-    Input --> B1
+    Input --> B0
 
     SQLite[("SQLite\nmeetings, speakers,\nsegments, action_items,\nsummaries, topics")]
     Chroma[("ChromaDB\nchunk embeddings of\ntranscript + summary")]
@@ -35,7 +36,7 @@ flowchart TD
     Search --> SQLite
     Search --> Chroma
 
-    UI["React + Vite Frontend\nUpload · Archive/Search · Detail · Analytics"]
+    UI["React + Vite + TypeScript Frontend\nUpload · Archive/Search · Detail · Analytics"]
     UI -->|natural-language queries| Search
     Search -->|cited answer + matches| UI
     SQLite --> UI
@@ -43,10 +44,14 @@ flowchart TD
 ```
 
 The whole ingest pipeline runs in a background task so the upload request returns
-immediately; the frontend polls meeting status (`queued → transcribing → diarising →
-analysing → indexing → done`).
+immediately; the frontend polls meeting status (`queued → converting → transcribing →
+diarising → analysing → indexing → done`).
 
 ## Components
+
+### Audio conversion (`services/audio.py`)
+- Normalises any uploaded format to 16 kHz mono WAV using **PyAV** (no system `ffmpeg` needed).
+- Also exposes `get_duration()` for the normalised file.
 
 ### Transcription (`services/transcription.py`)
 - `faster-whisper` (`WhisperModel`) with `word_timestamps=True`.
@@ -95,15 +100,18 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - `topics(id, meeting_id, topic)`
 
 ## API surface (FastAPI)
+- `GET  /api/health` — health check (model config, feature flags)
 - `POST /api/meetings` — upload audio (multipart), starts pipeline → `{id, status}`
-- `GET  /api/meetings` — list
+- `GET  /api/meetings` — list all meetings
 - `GET  /api/meetings/{id}` — detail (transcript, summary, action items, speakers, status)
+- `GET  /api/meetings/{id}/audio` — stream the original audio file
+- `PATCH /api/meetings/{id}` — rename meeting
 - `DELETE /api/meetings/{id}` — delete (DB + vectors + file)
-- `POST /api/meetings/{id}/reprocess` — re-run pipeline
+- `POST /api/meetings/{id}/reprocess` — re-run pipeline from scratch
 - `PATCH /api/speakers/{id}` — rename speaker
 - `PATCH /api/action-items/{id}` — toggle completion
 - `POST /api/search` — `{query}` → cited RAG answer + matches
-- `GET  /api/analytics/...` — speaking-time, frequency, completion, topics
+- `GET  /api/analytics/overview` — speaking-time, frequency, completion rate, recurring topics
 
 ## ADK bonus layer (`backend/adk_app/`)
 An optional [Google ADK](https://google.github.io/adk-docs/) agent — `meeting_assistant`
