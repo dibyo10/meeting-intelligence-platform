@@ -9,14 +9,37 @@ processing-stage state machine the UI tracks, and how each page consumes that da
 
 ## Data flow at a glance
 
-```
- Backend (FastAPI)              api/client.ts                Pages (React state)
- ────────────────              ─────────────                ───────────────────
-  GET /api/health        ──▶   api.health()         ──▶     Layout  → health panel
-  POST /api/meetings     ──▶   api.uploadMeeting()  ──▶     UploadPage
-  GET /api/meetings/:id  ──▶   api.getMeeting()     ──▶     UploadPage (poll) / DetailPage
-  POST /api/search       ──▶   api.search()         ──▶     ArchivePage
-  GET /api/analytics/... ──▶   api.analytics()      ──▶     AnalyticsPage
+```mermaid
+flowchart LR
+    subgraph Backend["Backend — FastAPI"]
+        E1["GET /api/health"]
+        E2["POST /api/meetings"]
+        E3["GET /api/meetings/:id"]
+        E4["POST /api/search"]
+         E5["GET /api/analytics/overview"]
+    end
+
+    subgraph Client["api/client.ts"]
+        C1["api.health()"]
+        C2["api.uploadMeeting()"]
+        C3["api.getMeeting()"]
+        C4["api.search()"]
+        C5["api.analytics()"]
+    end
+
+    subgraph Pages["Pages — React State"]
+        P1["Layout → health panel"]
+        P2["UploadPage"]
+        P3["UploadPage — poll / DetailPage"]
+        P4["ArchivePage"]
+        P5["AnalyticsPage"]
+    end
+
+    E1 --> C1 --> P1
+    E2 --> C2 --> P2
+    E3 --> C3 --> P3
+    E4 --> C4 --> P4
+    E5 --> C5 --> P5
 ```
 
 The client never holds a global store — each page fetches what it needs with `useEffect` and
@@ -42,9 +65,23 @@ When a recording is uploaded the backend runs the pipeline in the background and
 `GET /api/meetings/:id`, reading the `stage` field. The frontend owns the human-readable labels,
 the ordering, and the progress percentage — all in [`utils.ts`](../frontend/src/utils.ts).
 
-```
-queued → converting → transcribing → diarising → analysing → indexing → done
-                                                                    └─▶ error
+```mermaid
+stateDiagram-v2
+    [*] --> queued
+    queued --> converting
+    converting --> transcribing
+    transcribing --> diarising
+    diarising --> analysing
+    analysing --> indexing
+    indexing --> done
+    done --> [*]
+
+    queued --> error
+    converting --> error
+    transcribing --> error
+    diarising --> error
+    analysing --> error
+    indexing --> error
 ```
 
 | `stage`        | Label (`STAGE_LABELS`)   |

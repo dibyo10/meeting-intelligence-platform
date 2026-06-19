@@ -2,33 +2,44 @@
 
 ## Overview
 
-```
-                          ┌──────────────────────────────────────────────┐
-   Upload / Live mic ───▶ │  FastAPI backend                              │
-                          │                                               │
-                          │  1. Ingest (save file, create Meeting row)    │
-                          │  2. Transcribe   → faster-whisper             │
-                          │  3. Diarise      → pyannote.audio             │
-                          │  4. Merge        → speaker-labelled segments  │
-                          │  5. Agents (gemini-3.1-pro-preview):          │
-                          │       • SummaryAgent                          │
-                          │       • ActionItemAgent                       │
-                          │       • TopicAgent                            │
-                          │  6. Index        → gemini-embedding-001 +     │
-                          │                    ChromaDB                   │
-                          └───────────────┬───────────────────────────────┘
-                                          │
-              ┌───────────────────────────┼───────────────────────────┐
-              ▼                            ▼                           ▼
-        SQLite (relational)        ChromaDB (vectors)          Analytics service
-   meetings, speakers,            chunk embeddings of         speaking time, frequency,
-   segments, action_items,        transcript + summary        completion rate, topics
-   summaries, topics
-              ▲                            ▲
-              └──────── SearchAgent (RAG) ─┘   ◀── natural-language queries
-                                          │
-                                  React + Vite frontend
-                          (Upload · Archive/Search · Detail · Analytics)
+```mermaid
+flowchart TD
+    Input["Upload / Live mic"]
+
+    subgraph Backend["FastAPI Backend"]
+        direction TB
+        B1["1. Ingest — save file, create Meeting row"]
+        B2["2. Transcribe — faster-whisper"]
+        B3["3. Diarise — pyannote.audio"]
+        B4["4. Merge — speaker-labelled segments"]
+        B5["5. Agents — gemini-3.1-pro-preview"]
+        B5a["SummaryAgent"]
+        B5b["ActionItemAgent"]
+        B5c["TopicAgent"]
+        B6["6. Index — gemini-embedding-001 + ChromaDB"]
+
+        B1 --> B2 --> B3 --> B4 --> B5
+        B5 --> B5a & B5b & B5c
+        B5a & B5b & B5c --> B6
+    end
+
+    Input --> B1
+
+    SQLite[("SQLite\nmeetings, speakers,\nsegments, action_items,\nsummaries, topics")]
+    Chroma[("ChromaDB\nchunk embeddings of\ntranscript + summary")]
+    Analytics["Analytics Service\nspeaking time, frequency,\ncompletion rate, topics"]
+
+    B6 --> SQLite & Chroma & Analytics
+
+    Search["SearchAgent — RAG"]
+    Search --> SQLite
+    Search --> Chroma
+
+    UI["React + Vite Frontend\nUpload · Archive/Search · Detail · Analytics"]
+    UI -->|natural-language queries| Search
+    Search -->|cited answer + matches| UI
+    SQLite --> UI
+    Analytics --> UI
 ```
 
 The whole ingest pipeline runs in a background task so the upload request returns
@@ -36,6 +47,10 @@ immediately; the frontend polls meeting status (`queued → transcribing → dia
 analysing → indexing → done`).
 
 ## Components
+
+### Audio conversion (`services/audio.py`)
+- Normalises any uploaded format to 16 kHz mono WAV using **PyAV** (no system `ffmpeg` needed).
+- Also exposes `get_duration()` for the normalised file.
 
 ### Transcription (`services/transcription.py`)
 - `faster-whisper` (`WhisperModel`) with `word_timestamps=True`.
@@ -84,8 +99,9 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - `topics(id, meeting_id, topic)`
 
 ## API surface (FastAPI)
+- `GET  /api/health` — health check (model config, feature flags)
 - `POST /api/meetings` — upload audio (multipart), starts pipeline → `{id, status}`
-- `GET  /api/meetings` — list
+- `GET  /api/meetings` — list all meetings
 - `GET  /api/meetings/{id}` — detail (transcript, summary, action items, speakers, status)
 - `DELETE /api/meetings/{id}` — delete (DB + vectors + file)
 - `POST /api/meetings/{id}/reprocess` — re-run pipeline
