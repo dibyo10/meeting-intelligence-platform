@@ -4,33 +4,42 @@
 
 ```mermaid
 flowchart TD
-    mic["Upload / Live mic"] --> backend
+    Input["Upload / Live mic"]
 
-    subgraph backend["FastAPI backend — background ingest pipeline"]
+    subgraph Backend["FastAPI Backend"]
         direction TB
-        s1["1 · Ingest — save file, create Meeting row"]
-        s2["2 · Transcribe → faster-whisper"]
-        s3["3 · Diarise → pyannote.audio"]
-        s4["4 · Merge → speaker-labelled segments"]
-        s5["5 · Agents (gemini-3.1-pro-preview)<br/>SummaryAgent · ActionItemAgent · TopicAgent"]
-        s6["6 · Index → gemini-embedding-001 + ChromaDB"]
-        s1 --> s2 --> s3 --> s4 --> s5 --> s6
+        B1["1. Ingest — save file, create Meeting row"]
+        B2["2. Transcribe — faster-whisper"]
+        B3["3. Diarise — pyannote.audio"]
+        B4["4. Merge — speaker-labelled segments"]
+        B5["5. Agents — gemini-3.1-pro-preview"]
+        B5a["SummaryAgent"]
+        B5b["ActionItemAgent"]
+        B5c["TopicAgent"]
+        B6["6. Index — gemini-embedding-001 + ChromaDB"]
+
+        B1 --> B2 --> B3 --> B4 --> B5
+        B5 --> B5a & B5b & B5c
+        B5a & B5b & B5c --> B6
     end
 
-    backend --> sqlite[("SQLite (relational)<br/>meetings, speakers, segments,<br/>action_items, summaries, topics")]
-    backend --> chroma[("ChromaDB (vectors)<br/>chunk embeddings of<br/>transcript + summary")]
-    backend --> analytics["Analytics service<br/>speaking time, frequency,<br/>completion rate, topics"]
+    Input --> B1
 
-    nlq["Natural-language queries"] --> search["SearchAgent (RAG)"]
-    sqlite --> search
-    chroma --> search
+    SQLite[("SQLite<br/>meetings, speakers,<br/>segments, action_items,<br/>summaries, topics")]
+    Chroma[("ChromaDB<br/>chunk embeddings of<br/>transcript + summary")]
+    Analytics["Analytics Service<br/>speaking time, frequency,<br/>completion rate, topics"]
 
-    sqlite --> frontend
-    chroma --> frontend
-    analytics --> frontend
-    search --> frontend
+    B6 --> SQLite & Chroma & Analytics
 
-    frontend["React + Vite frontend<br/>Upload · Archive/Search · Detail · Analytics"]
+    Search["SearchAgent — RAG"]
+    Search --> SQLite
+    Search --> Chroma
+
+    UI["React + Vite Frontend<br/>Upload · Archive/Search · Detail · Analytics"]
+    UI -->|natural-language queries| Search
+    Search -->|cited answer + matches| UI
+    SQLite --> UI
+    Analytics --> UI
 ```
 
 The whole ingest pipeline runs in a background task so the upload request returns
@@ -38,6 +47,10 @@ immediately; the frontend polls meeting status (`queued → transcribing → dia
 analysing → indexing → done`).
 
 ## Components
+
+### Audio conversion (`services/audio.py`)
+- Normalises any uploaded format to 16 kHz mono WAV using **PyAV** (no system `ffmpeg` needed).
+- Also exposes `get_duration()` for the normalised file.
 
 ### Transcription (`services/transcription.py`)
 - `faster-whisper` (`WhisperModel`) with `word_timestamps=True`.
@@ -60,7 +73,7 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - **degrades gracefully** — if the installed SDK rejects a parameter, it retries without it,
 - robustly parses JSON (strips code fences) and validates with Pydantic.
 
-- **SummaryAgent** → `{attendees, key_decisions, discussion_points, open_questions, next_steps}`
+- **SummaryAgent** → `{overview, attendees, key_decisions, discussion_points, open_questions, next_steps}`
 - **ActionItemAgent** → `[{task, owner, deadline}]`
 - **TopicAgent** → `[topic]` (normalised keywords for recurring-topic analytics)
 - **SearchAgent** → retrieves top-k chunks from ChromaDB and synthesises a cited answer
@@ -78,16 +91,17 @@ All use `gemini-3.1-pro-preview` through a single defensive client
 - **Recurring topics:** topic frequency across meetings.
 
 ## Data model (SQLite via SQLAlchemy)
-- `meetings(id, title, created_at, duration, audio_path, status, error)`
+- `meetings(id, title, created_at, duration, audio_path, status, stage, error, language)`
 - `speakers(id, meeting_id, label, display_name)`
 - `transcript_segments(id, meeting_id, speaker_id, start, end, text)`
 - `action_items(id, meeting_id, task, owner, deadline, completed)`
-- `summaries(meeting_id, attendees, key_decisions, discussion_points, open_questions, next_steps)` (JSON columns)
+- `summaries(meeting_id, overview, attendees, key_decisions, discussion_points, open_questions, next_steps)` (JSON columns)
 - `topics(id, meeting_id, topic)`
 
 ## API surface (FastAPI)
+- `GET  /api/health` — health check (model config, feature flags)
 - `POST /api/meetings` — upload audio (multipart), starts pipeline → `{id, status}`
-- `GET  /api/meetings` — list
+- `GET  /api/meetings` — list all meetings
 - `GET  /api/meetings/{id}` — detail (transcript, summary, action items, speakers, status)
 - `DELETE /api/meetings/{id}` — delete (DB + vectors + file)
 - `POST /api/meetings/{id}/reprocess` — re-run pipeline
