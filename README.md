@@ -87,11 +87,12 @@ How each is met is tracked in [`docs/FEATURES.md`](docs/FEATURES.md).
 ---
 
 ## 📁 Repo layout
-```
-meeting-intelligence/
-├── backend/          FastAPI app, Whisper/pyannote services, Gemini agents, RAG
-├── frontend/         React + Vite UI (upload, archive/search, detail, analytics)
-├── docs/             FEATURES.md (living log) + ARCHITECTURE.md
-├── data/             SQLite DB, ChromaDB, uploads (gitignored)
-└── samples/          sample meeting audio for the demo (gitignored)
+```mermaid
+graph LR
+    root["meeting-intelligence/"]
+    root --> backend["backend/ — FastAPI app, Whisper/pyannote services, Gemini agents, RAG"]
+    root --> frontend["frontend/ — React + Vite UI (upload, archive/search, detail, analytics)"]
+    root --> docs["docs/ — FEATURES.md (living log) + ARCHITECTURE.md"]
+    root --> data["data/ — SQLite DB, ChromaDB, uploads (gitignored)"]
+    root --> samples["samples/ — sample meeting audio for the demo (gitignored)"]
 ```

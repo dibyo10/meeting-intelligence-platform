@@ -2,33 +2,35 @@
 
 ## Overview
 
-```
-                          ┌──────────────────────────────────────────────┐
-   Upload / Live mic ───▶ │  FastAPI backend                              │
-                          │                                               │
-                          │  1. Ingest (save file, create Meeting row)    │
-                          │  2. Transcribe   → faster-whisper             │
-                          │  3. Diarise      → pyannote.audio             │
-                          │  4. Merge        → speaker-labelled segments  │
-                          │  5. Agents (gemini-3.1-pro-preview):          │
-                          │       • SummaryAgent                          │
-                          │       • ActionItemAgent                       │
-                          │       • TopicAgent                            │
-                          │  6. Index        → gemini-embedding-001 +     │
-                          │                    ChromaDB                   │
-                          └───────────────┬───────────────────────────────┘
-                                          │
-              ┌───────────────────────────┼───────────────────────────┐
-              ▼                            ▼                           ▼
-        SQLite (relational)        ChromaDB (vectors)          Analytics service
-   meetings, speakers,            chunk embeddings of         speaking time, frequency,
-   segments, action_items,        transcript + summary        completion rate, topics
-   summaries, topics
-              ▲                            ▲
-              └──────── SearchAgent (RAG) ─┘   ◀── natural-language queries
-                                          │
-                                  React + Vite frontend
-                          (Upload · Archive/Search · Detail · Analytics)
+```mermaid
+flowchart TD
+    mic["Upload / Live mic"] --> backend
+
+    subgraph backend["FastAPI backend — background ingest pipeline"]
+        direction TB
+        s1["1 · Ingest — save file, create Meeting row"]
+        s2["2 · Transcribe → faster-whisper"]
+        s3["3 · Diarise → pyannote.audio"]
+        s4["4 · Merge → speaker-labelled segments"]
+        s5["5 · Agents (gemini-3.1-pro-preview)<br/>SummaryAgent · ActionItemAgent · TopicAgent"]
+        s6["6 · Index → gemini-embedding-001 + ChromaDB"]
+        s1 --> s2 --> s3 --> s4 --> s5 --> s6
+    end
+
+    backend --> sqlite[("SQLite (relational)<br/>meetings, speakers, segments,<br/>action_items, summaries, topics")]
+    backend --> chroma[("ChromaDB (vectors)<br/>chunk embeddings of<br/>transcript + summary")]
+    backend --> analytics["Analytics service<br/>speaking time, frequency,<br/>completion rate, topics"]
+
+    nlq["Natural-language queries"] --> search["SearchAgent (RAG)"]
+    sqlite --> search
+    chroma --> search
+
+    sqlite --> frontend
+    chroma --> frontend
+    analytics --> frontend
+    search --> frontend
+
+    frontend["React + Vite frontend<br/>Upload · Archive/Search · Detail · Analytics"]
 ```
 
 The whole ingest pipeline runs in a background task so the upload request returns
